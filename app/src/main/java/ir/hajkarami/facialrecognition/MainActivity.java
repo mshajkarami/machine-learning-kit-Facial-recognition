@@ -4,6 +4,7 @@ package ir.hajkarami.facialrecognition;
 import android.app.ComponentCaller;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
@@ -22,7 +23,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.FirebaseApp;
 import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.FaceContour;
+import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -71,10 +75,19 @@ public class MainActivity extends AppCompatActivity {
         Bundle bundle = data.getExtras();
         Bitmap bitmap = (Bitmap) bundle.get("data");
         FaceDetectionProcess(bitmap);
-        Toast.makeText(this,"Success!!",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Success!!", Toast.LENGTH_SHORT).show();
     }
 
     private void FaceDetectionProcess(Bitmap bitmap) {
-
+        textView.setText("Processing Image...");
+        final StringBuilder builder = new StringBuilder();
+        BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+        InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
+        FaceDetectorOptions faceDetectorOptions = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking().build();
+        FaceDetector detector = FaceDetection.getClient(faceDetectorOptions);
     }
 }
