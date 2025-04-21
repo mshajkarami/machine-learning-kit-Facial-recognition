@@ -21,12 +21,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceContour;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -88,6 +92,74 @@ public class MainActivity extends AppCompatActivity {
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                 .enableTracking().build();
+
+        // Real-time contour detection
+        FaceDetectorOptions realTimeOpts =
+                new FaceDetectorOptions.Builder()
+                        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                        .build();
+//        class YourAnalyzer implements ImageAnalysis.Analyzer {
+//
+//            @OptIn(markerClass = ExperimentalGetImage.class)
+//            @Override
+//            public void analyze(ImageProxy imageProxy) {
+//                Image mediaImage = imageProxy.getImage();
+//                if (mediaImage != null) {
+//                    InputImage image =
+//                            InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
+//                    // Pass image to an ML Kit Vision API
+//                    // ...
+//                }
+//            }
+//        }
         FaceDetector detector = FaceDetection.getClient(faceDetectorOptions);
+        Task<List<Face>> result = detector.process(inputImage)
+                .addOnSuccessListener(faces -> {
+                    if (faces.size() != 0) {
+                        if (faces.size() == 1) {
+                            builder.append(faces.size() + "Face Detected \n\n");
+
+                        } else if (faces.size() > 1) {
+                            builder.append(faces.size() + "Face Detected \n\n");
+                        }
+                        for (Face face : faces) {
+                            int id = face.getTrackingId();
+                            float rotY = face.getHeadEulerAngleY();
+                            float rotZ = face.getHeadEulerAngleZ();
+                            builder.append("1. Face Traking ID [" + id + "]\n");
+                            builder.append("2. Head Rotation to Right [" + String.format("%.2f", rotY) + " deg. ]\n");
+                            builder.append("3. Head Title Sideways [" + String.format("%.2f", rotZ) + " deg. ]\n");
+                            // Smiling Probability
+                            if (face.getSmilingProbability() > 0) {
+                                float SmilingProbability = face.getSmilingProbability();
+                                builder.append("SmilingProbability [" + String.format("%.2f", SmilingProbability + "]\n"))
+                            }
+                            // left eye
+                            if (face.getLeftEyeOpenProbability() > 0) {
+                                float leftEyeOpenProbability = face.getLeftEyeOpenProbability();
+                                builder.append("leftEyeOpenProbability [" + String.format("%.2f", leftEyeOpenProbability + "]\n"))
+                            }
+                            // right eye
+                            if (face.getRightEyeOpenProbability() > 0) {
+                                float getRightEyeOpenProbability = face.getRightEyeOpenProbability();
+                                builder.append("rightEyeOpenProbability [" + String.format("%.2f", getRightEyeOpenProbability + "]\n"))
+                            }
+                            builder.append("\n");
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    StringBuilder builder1 = new StringBuilder();
+                    builder1.append("Sorry !! There is an error!");
+                    ShowDetection("Face",builder,false);
+                    Toast.makeText(MainActivity.this, "Face detection failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
     }
+
+    private void ShowDetection(String face, StringBuilder builder, boolean success) {
+
+    }
+
+
 }
